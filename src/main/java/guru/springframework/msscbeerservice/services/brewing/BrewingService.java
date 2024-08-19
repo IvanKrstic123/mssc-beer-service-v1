@@ -1,4 +1,4 @@
-package guru.springframework.msscbeerservice.services;
+package guru.springframework.msscbeerservice.services.brewing;
 
 import guru.springframework.msscbeerservice.config.JmsConfig;
 import guru.springframework.msscbeerservice.domain.Beer;
@@ -23,17 +23,17 @@ public class BrewingService {
     private final JmsTemplate jmsTemplate;
     private final BeerMapper beerMapper;
 
-    @Scheduled(fixedRate = 5000)
-    public void checkForLowInventory() {
+    @Scheduled(fixedRate = 5000) //every 5 seconds
+    public void checkForLowInventory(){
         List<Beer> beers = beerRepository.findAll();
 
         beers.forEach(beer -> {
-            Integer invOnHand = beerInventoryService.getOnhandInventory(beer.getId());
+            Integer invQOH = beerInventoryService.getOnhandInventory(beer.getId());
 
             log.debug("Min Onhand is: " + beer.getMinOnHand());
-            log.debug("Inventory is: " + invOnHand);
+            log.debug("Inventory is: "  + invQOH);
 
-            if (beer.getMinOnHand() >= invOnHand) {
+            if(beer.getMinOnHand() >= invQOH){
                 jmsTemplate.convertAndSend(JmsConfig.BREWING_REQUEST_QUEUE, new BrewBeerEvent(beerMapper.beerToBeerDto(beer)));
             }
         });
